@@ -1,12 +1,13 @@
-import express from 'express'
+import express, { Router } from 'express'
 
 export class Server {
 
-    private app = express();
+    private readonly app = express();
 
-    constructor(private readonly port: number, private readonly callback?: (error?: Error | undefined) => void) { }
+    constructor(private readonly port: number, private readonly routes: Router, private readonly callback?: (error?: Error | undefined) => void) { }
 
     start() {
+        this.app.use(this.routes)
         this.app.listen(this.port, this.callback ? this.callback : () => {
             console.log(`Server running on port ${this.port}`)
         })
