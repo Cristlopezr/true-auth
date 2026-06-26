@@ -3,7 +3,7 @@ import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { AuthMongoRepositoryImplementation } from "../../infrastructure/repositories/auth-mongo-impl.repository";
 import { CreateUserDtoImpl } from "./dto/create-user-impl.dto";
-import { DtoValidator } from "../../infrastructure/middlewares/dto-validator.middleware";
+import { DtoValidator } from "../middlewares/dto-validator.middleware";
 
 export class AuthRoutes {
 
@@ -14,10 +14,10 @@ export class AuthRoutes {
         const authService = new AuthService(authRepository)
         const authController = new AuthController(authService);
 
-        router.get('/login', authController.login)
+        router.post('/login', authController.login)
         //Validate with zod
         router.post('/register', [DtoValidator.validate(CreateUserDtoImpl, "body")], authController.register)
-        router.get('/refresh', authController.refreshToken)
+        router.post('/refresh', authController.refreshToken)
 
         return router;
     }
