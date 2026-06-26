@@ -1,3 +1,4 @@
+import { CreateUserDto } from "../../domain/dto/create-user.dto";
 import { AuthRepository } from "../../domain/repositories/auth.repository"
 
 export class AuthService {
@@ -8,8 +9,8 @@ export class AuthService {
         return this.authRepository.login()
     }
 
-    register = () => {
-        return this.authRepository.register();
+    register = async (createUserDto: CreateUserDto) => {
+        return await this.authRepository.register(createUserDto);
     }
 
     refreshToken = () => {

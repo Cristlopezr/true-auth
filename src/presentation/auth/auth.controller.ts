@@ -12,8 +12,10 @@ export class AuthController {
     }
 
     register = async (req: Request, res: Response) => {
-        const message = await this.authService.register()
-        res.status(200).json({ ok: message })
+        const user = await this.authService.register(req.body)
+
+        //UserDto.toJSON()
+        res.status(200).json({ ok: user })
     }
 
     refreshToken = async (req: Request, res: Response) => {

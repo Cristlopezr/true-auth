@@ -1,11 +1,19 @@
+import { prisma } from "../../data/prisma";
+import { CreateUserDto } from "../../domain/dto/create-user.dto";
+import { UserEntity } from "../../domain/entities/user.entity";
 import { AuthRepository } from "../../domain/repositories/auth.repository";
 
 export class AuthMongoRepositoryImplementation implements AuthRepository {
-    async login(): Promise<string> {
-        return `Login in repository`
+    async login(): Promise<UserEntity> {
+        throw new Error("Method not implemented")
     }
-    async register(): Promise<string> {
-        return `register in repository`
+
+    register = async (createUserDto: CreateUserDto): Promise<UserEntity> => {
+        const user = await prisma.user.create({
+            data: createUserDto
+        })
+
+        return UserEntity.fromJson(user);
     }
     async refreshToken(): Promise<string> {
         return `refreshToken in respository`
