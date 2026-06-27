@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { AuthMongoRepositoryImplementation } from "../../infrastructure/repositories/auth-mongo-impl.repository";
 import { CreateUserDtoImpl } from "./dto/create-user-impl.dto";
 import { DtoValidator } from "../middlewares/dto-validator.middleware";
+import { BcryptEncrypterImpl } from "../../infrastructure/adapters/bcrypt-encrypter-impl.gateway";
 
 export class AuthRoutes {
 
@@ -11,7 +12,8 @@ export class AuthRoutes {
 
         const router = Router();
         const authRepository = new AuthMongoRepositoryImplementation();
-        const authService = new AuthService(authRepository)
+        const encrypter = new BcryptEncrypterImpl();
+        const authService = new AuthService(authRepository, encrypter);
         const authController = new AuthController(authService);
 
         router.post('/login', authController.login)
