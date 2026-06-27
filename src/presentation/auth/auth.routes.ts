@@ -4,24 +4,33 @@ import { AuthService } from "./auth.service";
 import { CreateUserDtoImpl } from "./dto/create-user-impl.dto";
 import { DtoValidator } from "../common/middlewares/dto-validator.middleware";
 import { BcryptEncrypterImpl } from "../../infrastructure/auth/adapters/bcrypt-encrypter-impl.gateway";
-import { AuthMongoRepositoryImplementation } from "../../infrastructure/auth/repositories/auth-mongo-impl.repository";
+import { AuthPrismaRepositoryImplementation } from "../../infrastructure/auth/repositories/auth-prisma-impl.repository";
 import { JsonWebTokenImpl } from "../../infrastructure/auth/adapters/jsonwebtoken-jwt-impl.gateway";
+import { ValidateJWT } from "../common/middlewares/validate-jwt.middleware";
+import { UserPrismaRepositoryImpl } from "../../infrastructure/user/repositories/user-prisma-impl.repository";
+import { UserService } from "../user/user.service";
 
 export class AuthRoutes {
 
     static get routes() {
 
         const router = Router();
-        const authRepository = new AuthMongoRepositoryImplementation();
+        const authRepository = new AuthPrismaRepositoryImplementation();
         const encrypter = new BcryptEncrypterImpl();
         const jwt = new JsonWebTokenImpl();
         const authService = new AuthService(authRepository, encrypter, jwt);
         const authController = new AuthController(authService);
 
+        //QUITAR
+        const userRepository = new UserPrismaRepositoryImpl();
+        const userService = new UserService(userRepository);
+        const validateJwtMiddleware = new ValidateJWT(jwt, userService);
+
         router.post('/login', authController.login)
         //Validate with zod
-        router.post('/register', [DtoValidator.validate(CreateUserDtoImpl, "body")], authController.register)
+        router.post('/register', [DtoValidator.Validate(CreateUserDtoImpl, "body")], authController.register)
         router.post('/refresh', authController.refreshToken)
+        router.get('/validate', [validateJwtMiddleware.validate])
 
         return router;
     }

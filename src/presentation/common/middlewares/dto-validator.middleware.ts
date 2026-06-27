@@ -4,12 +4,12 @@ import { validate } from "class-validator";
 
 export class DtoValidator {
 
-    static validate = (dtoClass: any, propertyName: 'body' | 'query' | 'params') => {
+    static Validate = (dtoClass: any, propertyName: 'body' | 'query' | 'params') => {
         return async (req: Request, res: Response, next: NextFunction) => {
             const dtoInstance = plainToInstance(dtoClass, req[propertyName])
             const errors = await validate(dtoInstance);
             if (errors.length > 0) {
-                const validationErrors = DtoValidator.formatErrors(errors)
+                const validationErrors = DtoValidator.FormatErrors(errors)
 
                 return res.status(400).json({ statusCode: 400, message: 'Bad Request', errors: validationErrors })
             }
@@ -18,7 +18,7 @@ export class DtoValidator {
         }
     }
 
-    private static formatErrors = (errors: any[]) => {
+    private static FormatErrors = (errors: any[]) => {
         const formattedErrors: Record<string, any> = {};
 
         errors.forEach((err) => {
@@ -26,7 +26,7 @@ export class DtoValidator {
                 formattedErrors[err.property] = Object.values(err.constraints);
             }
             if (err.children && err.children.length > 0) {
-                formattedErrors[err.property] = DtoValidator.formatErrors(err.children);
+                formattedErrors[err.property] = DtoValidator.FormatErrors(err.children);
             }
         });
 

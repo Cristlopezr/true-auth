@@ -1,8 +1,8 @@
 import { CreateUserDto } from "../dto/create-user.dto"
-import { UserEntity } from "../entities/user.entity"
+import { UserRecord } from "../models/user.record"
 
 export interface AuthRepository {
-    login(): Promise<UserEntity>
-    register(createUserDto: CreateUserDto): Promise<UserEntity>
+    findByEmail(email: string): Promise<UserRecord | null>
+    createUser(createUserDto: CreateUserDto): Promise<UserRecord>
     refreshToken(): Promise<string>
 }
