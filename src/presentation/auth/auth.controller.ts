@@ -12,10 +12,15 @@ export class AuthController {
     }
 
     register = async (req: Request, res: Response) => {
-        const user = await this.authService.register(req.body)
+        try {
+            const data = await this.authService.register(req.body)
+            res.status(200).json({ data })
+        } catch (error) {
+            console.log(error)
+            res.status(500).json('Internal server error')
+        }
 
-        //UserDto.toJSON()
-        res.status(200).json({ ok: user })
+
     }
 
     refreshToken = async (req: Request, res: Response) => {

@@ -1,4 +1,4 @@
-import { Encrypter } from "../../domain/gateways/encrypter.gateway";
+import { Encrypter } from "../../../domain/auth/gateways/encrypter.gateway";
 import bcrypt from 'bcrypt'
 
 export class BcryptEncrypterImpl implements Encrypter {

@@ -1,7 +1,7 @@
-import { prisma } from "../../data/prisma";
-import { CreateUserDto } from "../../domain/dto/create-user.dto";
-import { UserEntity } from "../../domain/entities/user.entity";
-import { AuthRepository } from "../../domain/repositories/auth.repository";
+import { prisma } from "../../../data/prisma";
+import { CreateUserDto } from "../../../domain/auth/dto/create-user.dto";
+import { UserEntity } from "../../../domain/auth/entities/user.entity";
+import { AuthRepository } from "../../../domain/auth/repositories/auth.repository";
 
 export class AuthMongoRepositoryImplementation implements AuthRepository {
     async login(): Promise<UserEntity> {
