@@ -1,4 +1,5 @@
 import express, { Router } from 'express'
+import { GlobalErrorHandler } from './common/errors/error-handler';
 
 export class Server {
 
@@ -9,6 +10,7 @@ export class Server {
     start() {
         this.app.use(express.json())
         this.app.use(this.routes)
+        this.app.use(GlobalErrorHandler.HandleError)
         this.app.listen(this.port, this.callback ? this.callback : () => {
             console.log(`Server running on port ${this.port}`)
         })

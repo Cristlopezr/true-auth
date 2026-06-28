@@ -7,6 +7,6 @@ export interface JwtPayload {
 }
 
 export interface JWT {
-    signJWT(payload: string | object, secret: string, options?: JwtOptions): string
-    verifyJWT(token: string, secret: string): JwtPayload
+    signJWT(payload: string | object, options?: JwtOptions): string
+    verifyJWT(token: string): JwtPayload
 }

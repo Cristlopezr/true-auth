@@ -1,5 +1,5 @@
 import { IsEmail, IsString, Matches, MaxLength, MinLength } from "class-validator";
-import { CreateUserDto } from "../../../domain/dto/create-user.dto";
+import { CreateUserDto } from "../../../domain/user/dto/create-user.dto";
 
 export class CreateUserDtoImpl implements CreateUserDto {
 
