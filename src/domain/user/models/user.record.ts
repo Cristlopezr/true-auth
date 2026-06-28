@@ -4,4 +4,6 @@ export type UserRecord = {
     email: string;
     password: string;
     roles: string[];
+    isEmailValidated: boolean;
+    isActive: boolean;
 }

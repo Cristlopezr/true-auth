@@ -9,6 +9,7 @@ export class CreateUserDtoImpl implements CreateUserDto {
     name: string;
 
     @IsEmail()
+    @IsString()
     email: string;
 
     @IsString()

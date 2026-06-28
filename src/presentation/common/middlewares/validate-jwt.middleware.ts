@@ -9,11 +9,16 @@ export class ValidateJWT {
 
     validate = async (req: Request, res: Response, next: NextFunction) => {
         const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            throw CustomError.Unauthorized(`Token is not present in the request's headers`)
-        }
+
+        if (!token) throw CustomError.Unauthorized(`Token is not present in the request's headers`)
+
         const payload = this.jwt.verifyJWT(token);
         const user = await this.userService.getUserById(payload.sub)
+
+        if (!user.isActive) throw CustomError.Unauthorized('User inactive');
+
+        if (!user.isEmailValidated) throw CustomError.Unauthorized('Email not validated')
+
         req.user = user;
         next()
     }

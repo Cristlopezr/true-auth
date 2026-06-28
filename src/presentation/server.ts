@@ -9,7 +9,7 @@ export class Server {
 
     start() {
         this.app.use(express.json())
-        this.app.use(this.routes)
+        this.app.use('/api', this.routes)
         this.app.use(GlobalErrorHandler.HandleError)
         this.app.listen(this.port, this.callback ? this.callback : () => {
             console.log(`Server running on port ${this.port}`)
