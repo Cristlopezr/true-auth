@@ -14,5 +14,7 @@ export const envs = {
     EMAIL_ADDRESS: get("EMAIL_ADDRESS").required().asString(),
     GMAIL_APP_PASSWORD: get("GMAIL_APP_PASSWORD").required().asString(),
     EMAIL_VERIFICATION_SERVICE_URL: get("EMAIL_VERIFICATION_SERVICE_URL").required().asString(),
-    REFRESH_TOKEN_EXPIRATION_DAYS: get("REFRESH_TOKEN_EXPIRATION_DAYS").required().asInt()
+    REFRESH_TOKEN_EXPIRATION_DAYS: get("REFRESH_TOKEN_EXPIRATION_DAYS").required().asInt(),
+    COOKIE_DOMAIN: get("COOKIE_DOMAIN").asString(),
+    NODE_ENV: get("NODE_ENV").required().asEnum(['development', 'production', 'test'])
 };

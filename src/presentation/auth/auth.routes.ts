@@ -36,7 +36,7 @@ export class AuthRoutes {
 
         router.post('/login', [DtoValidator.Validate(LoginUserDtoImpl, "body")], authController.login)
         router.post('/register', [DtoValidator.Validate(CreateUserDtoImpl, "body")], authController.register)
-        router.post('/refresh', authController.refreshToken)
+        router.post('/refresh', authController.refreshJwtToken)
         router.get('/validateEmail/:token', authController.validateEmail)
 
         return router;

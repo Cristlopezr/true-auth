@@ -2,7 +2,7 @@ import { Router } from "express";
 import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
 import { UserRepositoryPrismaImpl } from "../../infrastructure/user/repositories/user-prisma-impl.repository";
-import { AuthMiddleware } from "../auth/middlewares/validate-jwt.middleware";
+import { AuthMiddleware } from "../auth/middlewares/auth.middleware";
 import { JsonWebTokenImpl } from "../../infrastructure/auth/adapters/jsonwebtoken-jwt-impl.gateway";
 
 export class UserRoutes {

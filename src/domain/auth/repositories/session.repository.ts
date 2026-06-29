@@ -1,4 +1,6 @@
+import { SessionRecord } from "../models/session.record"
+
 export interface SessionRepository {
-    findTokenByUserId(): Promise<string>
+    getSession(token: string): Promise<SessionRecord | null>
     createSession(token: string, expiresAt: Date, userId: string): Promise<void>
 }

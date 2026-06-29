@@ -43,14 +43,9 @@ export class AuthService {
         const expirationDate = DateAdapter.addDays(envs.REFRESH_TOKEN_EXPIRATION_DAYS);
         await this.sessionRepository.createSession(hashedRefreshToken, expirationDate, user.id);
 
-        //Crear refresh token
-        //Hashear refresh token
-        //Create session Save refresh token in db
-        //Send cookie http only with refresh token
-        //Send response to front end with jwt and user
         const token = this.jwt.signJWT({ sub: user.id });
 
-        return { user: UserEntity.fromRecord(user), token };
+        return { user: UserEntity.fromRecord(user), accessToken: token, refreshToken };
     }
 
     register = async (createUserDto: CreateUserDto) => {
@@ -78,7 +73,15 @@ export class AuthService {
         }
     }
 
-    refreshToken = () => {
+    refreshJwtToken = async (refreshToken: string) => {
+        const hashedRefreshToken = this.tokenGenerator.hashToken(refreshToken)
+        const session = await this.sessionRepository.getSession(hashedRefreshToken);
+        if (!session) throw CustomError.Unauthorized('Invalid session');
+        const { user } = session;
+        const accessToken = this.jwt.signJWT({ sub: user.id });
+        return {
+            user: UserEntity.fromRecord(user), accessToken
+        }
     }
 
     sendVerificationEmail = async (user: UserRecord) => {
