@@ -3,7 +3,7 @@ import { CreateUserDto } from "../../../domain/user/dto/create-user.dto";
 import { UserRecord } from "../../../domain/user/models/user.record";
 import { UserRepository } from "../../../domain/user/respositories/user.repository";
 
-export class UserPrismaRepositoryImpl implements UserRepository {
+export class UserRepositoryPrismaImpl implements UserRepository {
 
     getUserById = async (id: string): Promise<UserRecord | null> => {
         return await prisma.user.findFirst({

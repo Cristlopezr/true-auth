@@ -1,7 +1,7 @@
-import { Encrypter } from "../../../domain/auth/gateways/encrypter.gateway";
+import { PasswordEncrypter } from "../../../domain/auth/gateways/password-encrypter.gateway";
 import bcrypt from 'bcrypt'
 
-export class BcryptEncrypterImpl implements Encrypter {
+export class BcryptEncrypterImpl implements PasswordEncrypter {
 
     hashPassword = async (password: string, saltRounds: number) => {
         return await bcrypt.hash(password, saltRounds);

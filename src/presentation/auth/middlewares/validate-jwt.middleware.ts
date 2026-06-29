@@ -3,11 +3,11 @@ import { JWT } from "../../../domain/auth/gateways/jwt.gateway"
 import { CustomError } from "../../../domain/common/custom-error";
 import { UserService } from "../../user/user.service";
 
-export class ValidateJWT {
+export class AuthMiddleware {
 
     constructor(private readonly jwt: JWT, private readonly userService: UserService) { }
 
-    validate = async (req: Request, res: Response, next: NextFunction) => {
+    validateJWT = async (req: Request, res: Response, next: NextFunction) => {
         const token = req.headers.authorization?.split(' ')[1];
 
         if (!token) throw CustomError.Unauthorized(`Token is not present in the request's headers`)
@@ -17,9 +17,19 @@ export class ValidateJWT {
 
         if (!user.isActive) throw CustomError.Unauthorized('User inactive');
 
-        if (!user.isEmailValidated) throw CustomError.Unauthorized('Email not validated')
-
         req.user = user;
         next()
+    }
+
+    requireVerifiedEmail = (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user) throw CustomError.BadRequest('User not present in the request');
+        if (!req.user.isEmailValidated) throw CustomError.Unauthorized('Email not validated')
+    }
+
+    requireRoles = (roles: string[]) => {
+        return (req: Request, res: Response, next: NextFunction) => {
+            if (!req.user) throw CustomError.BadRequest('User not present in the request');
+            //Check roles
+        }
     }
 }

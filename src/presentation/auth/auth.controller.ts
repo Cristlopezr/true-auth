@@ -16,13 +16,15 @@ export class AuthController {
 
     register = async (req: Request, res: Response) => {
         const data = await this.authService.register(req.body)
-        res.status(200).json({
-            user: UserDto.fromEntity(data.user),
-            token: data.token
-        })
+        res.status(200).json(data)
     }
 
     refreshToken = async (req: Request, res: Response) => {
 
+    }
+
+    validateEmail = async (req: Request, res: Response) => {
+        const data = await this.authService.validateEmail(req.params.token as string)
+        res.status(200).json(data)
     }
 }

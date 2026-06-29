@@ -5,23 +5,32 @@ import { CreateUserDtoImpl } from "../user/dto/create-user-impl.dto";
 import { DtoValidator } from "../common/middlewares/dto-validator.middleware";
 import { BcryptEncrypterImpl } from "../../infrastructure/auth/adapters/bcrypt-encrypter-impl.gateway";
 import { JsonWebTokenImpl } from "../../infrastructure/auth/adapters/jsonwebtoken-jwt-impl.gateway";
-import { UserPrismaRepositoryImpl } from "../../infrastructure/user/repositories/user-prisma-impl.repository";
+import { UserRepositoryPrismaImpl } from "../../infrastructure/user/repositories/user-prisma-impl.repository";
 import { LoginUserDtoImpl } from "./dto/login-user-impl.dto";
+import { EmailVerificationPrismaImpl } from "../../infrastructure/auth/repositories/email-verification-prisma-impl.repository";
+import { CryptoVerificationTokenGeneratorImpl } from "../../infrastructure/auth/adapters/crypto-verification-token-generator-impl.gateway";
 
 export class AuthRoutes {
 
     static get routes() {
 
         const router = Router();
-        const userRepository = new UserPrismaRepositoryImpl();
+        const userRepository = new UserRepositoryPrismaImpl();
         const encrypter = new BcryptEncrypterImpl();
         const jwt = new JsonWebTokenImpl();
-        const authService = new AuthService(userRepository, encrypter, jwt);
+        const emailVerificationRepository = new EmailVerificationPrismaImpl();
+        const verificationTokenGenerator = new CryptoVerificationTokenGeneratorImpl();
+        const authService = new AuthService(userRepository,
+            encrypter,
+            jwt,
+            emailVerificationRepository,
+            verificationTokenGenerator);
         const authController = new AuthController(authService);
 
         router.post('/login', [DtoValidator.Validate(LoginUserDtoImpl, "body")], authController.login)
         router.post('/register', [DtoValidator.Validate(CreateUserDtoImpl, "body")], authController.register)
         router.post('/refresh', authController.refreshToken)
+        router.get('/validateEmail/:token', authController.validateEmail)
 
         return router;
     }
