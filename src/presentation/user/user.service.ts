@@ -8,7 +8,7 @@ export class UserService {
     }
 
     getUserById = async (id: string): Promise<UserEntity> => {
-        const user = await this.userRepository.getUserById(id);
+        const user = await this.userRepository.findUserById(id, { isActive: true, isEmailValidated: true });
         if (!user) throw CustomError.NotFound(`User with id ${id} not found`)
         return UserEntity.fromRecord(user)
     }

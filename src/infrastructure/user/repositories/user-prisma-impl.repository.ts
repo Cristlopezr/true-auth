@@ -1,7 +1,7 @@
 import { prisma } from "../../../data/prisma";
 import { CreateUserDto } from "../../../domain/user/dto/create-user.dto";
 import { UserRecord } from "../../../domain/user/models/user.record";
-import { UserRepository } from "../../../domain/user/respositories/user.repository";
+import { FindUserOptions, UserRepository } from "../../../domain/user/respositories/user.repository";
 
 export class UserRepositoryPrismaImpl implements UserRepository {
 
@@ -23,18 +23,23 @@ export class UserRepositoryPrismaImpl implements UserRepository {
         ])
     }
 
-    getUserById = async (id: string): Promise<UserRecord | null> => {
+    //If findUserOptions = undefined => getsAll
+    findUserById = async (id: string, options?: FindUserOptions): Promise<UserRecord | null> => {
         return await prisma.user.findFirst({
             where: {
-                id
+                id,
+                isEmailValidated: options?.isEmailValidated,
+                isActive: options?.isActive
             }
         })
     }
 
-    findByEmail = async (email: string): Promise<UserRecord | null> => {
+    findUserByEmail = async (email: string, options?: FindUserOptions): Promise<UserRecord | null> => {
         return await prisma.user.findFirst({
             where: {
-                email
+                email,
+                isEmailValidated: options?.isEmailValidated,
+                isActive: options?.isActive
             }
         })
     }

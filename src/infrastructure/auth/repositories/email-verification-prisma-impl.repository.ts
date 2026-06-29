@@ -1,17 +1,14 @@
-import { envs } from "../../../config/envs";
 import { prisma } from "../../../data/prisma";
 import { EmailVerificationRecord } from "../../../domain/auth/models/email-verification.record";
 import { EmailVerificationRepository } from "../../../domain/auth/repositories/email-verification.repository";
-import { DateAdapter } from "../../common/date-adapter";
 
 export class EmailVerificationPrismaImpl implements EmailVerificationRepository {
-    createToken = async (userId: string, token: string) => {
-        const expirationDate = DateAdapter.addMinutes(envs.EMAIL_TOKEN_EXPIRATION_MINUTES);
+    createToken = async (userId: string, token: string, expiresAt: Date) => {
         await prisma.emailVerification.create({
             data: {
                 token,
                 userId,
-                expiresAt: expirationDate
+                expiresAt
             }
         })
     }

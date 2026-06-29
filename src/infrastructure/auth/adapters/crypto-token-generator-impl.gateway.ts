@@ -1,8 +1,8 @@
-import { VerificationTokenGenerator } from "../../../domain/auth/gateways/verification-token-generator.gateway";
+import { TokenGenerator } from "../../../domain/auth/gateways/token-generator.gateway";
 import { randomBytes, createHash } from "node:crypto";
 
 
-export class CryptoVerificationTokenGeneratorImpl implements VerificationTokenGenerator {
+export class CryptoTokenGeneratorImpl implements TokenGenerator {
 
     generateToken = (): string => {
         return randomBytes(64).toString('hex');

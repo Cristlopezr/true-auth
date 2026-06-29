@@ -16,7 +16,7 @@ export class AuthController {
 
     register = async (req: Request, res: Response) => {
         const data = await this.authService.register(req.body)
-        res.status(200).json({ ok: true, ...data })
+        res.status(200).json({ user: UserDto.fromEntity(data.user), message: data.message })
     }
 
     refreshToken = async (req: Request, res: Response) => {
