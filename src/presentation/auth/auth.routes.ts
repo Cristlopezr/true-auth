@@ -9,6 +9,8 @@ import { UserRepositoryPrismaImpl } from "../../infrastructure/user/repositories
 import { LoginUserDtoImpl } from "./dto/login-user-impl.dto";
 import { EmailVerificationPrismaImpl } from "../../infrastructure/auth/repositories/email-verification-prisma-impl.repository";
 import { CryptoVerificationTokenGeneratorImpl } from "../../infrastructure/auth/adapters/crypto-verification-token-generator-impl.gateway";
+import { NodemailerEmailSenderImpl } from "../../infrastructure/common/gateways/nodemailer-email-sender-impl.gateway";
+import { envs } from "../../config/envs";
 
 export class AuthRoutes {
 
@@ -20,11 +22,13 @@ export class AuthRoutes {
         const jwt = new JsonWebTokenImpl();
         const emailVerificationRepository = new EmailVerificationPrismaImpl();
         const verificationTokenGenerator = new CryptoVerificationTokenGeneratorImpl();
+        const emailSender = new NodemailerEmailSenderImpl(envs.EMAIL_ADDRESS, envs.GMAIL_APP_PASSWORD);
         const authService = new AuthService(userRepository,
             encrypter,
             jwt,
             emailVerificationRepository,
-            verificationTokenGenerator);
+            verificationTokenGenerator,
+            emailSender);
         const authController = new AuthController(authService);
 
         router.post('/login', [DtoValidator.Validate(LoginUserDtoImpl, "body")], authController.login)

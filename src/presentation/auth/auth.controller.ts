@@ -16,7 +16,7 @@ export class AuthController {
 
     register = async (req: Request, res: Response) => {
         const data = await this.authService.register(req.body)
-        res.status(200).json(data)
+        res.status(200).json({ ok: true, ...data })
     }
 
     refreshToken = async (req: Request, res: Response) => {
@@ -25,6 +25,6 @@ export class AuthController {
 
     validateEmail = async (req: Request, res: Response) => {
         const data = await this.authService.validateEmail(req.params.token as string)
-        res.status(200).json(data)
+        res.status(200).json({ ok: true, ...data })
     }
 }

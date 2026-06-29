@@ -5,4 +5,5 @@ export interface UserRepository {
     getUserById(id: string): Promise<UserRecord | null>
     findByEmail(email: string): Promise<UserRecord | null>
     createUser(createUserDto: CreateUserDto): Promise<UserRecord>
+    validateEmailTransaction(userId: string): Promise<void>
 }

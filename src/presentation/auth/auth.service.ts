@@ -8,6 +8,9 @@ import { LoginUserDto } from "../../domain/auth/dto/login-user.dto";
 import { UserEntity } from "../../domain/user/entities/user.entity";
 import { EmailVerificationRepository } from "../../domain/auth/repositories/email-verification.repository";
 import { VerificationTokenGenerator } from "../../domain/auth/gateways/verification-token-generator.gateway";
+import { UserRecord } from "../../domain/user/models/user.record";
+import { EmailSender } from "../../domain/common/gateways/email-sender";
+import { envs } from "../../config/envs";
 
 export class AuthService {
 
@@ -15,12 +18,14 @@ export class AuthService {
         private readonly passwordEncrypter: PasswordEncrypter,
         private readonly jwt: JWT,
         private readonly emailVerificationRepository: EmailVerificationRepository,
-        private readonly verificationTokenGenerator: VerificationTokenGenerator
+        private readonly verificationTokenGenerator: VerificationTokenGenerator,
+        private readonly emailSender: EmailSender
     ) { }
 
     login = async (loginUserDto: LoginUserDto) => {
         const { email, password } = loginUserDto;
         const user = await this.userRepository.findByEmail(email);
+        //If user is inactive, we should update it
 
         if (!user) throw CustomError.Unauthorized('Invalid credentials');
 
@@ -40,7 +45,7 @@ export class AuthService {
         const hashedPassword = await this.passwordEncrypter.hashPassword(createUserDto.password, CONSTANTS.SALT_ROUNDS)
         const user = await this.userRepository.createUser({ ...createUserDto, password: hashedPassword });
 
-        await this.sendVerificationEmail(user.id);
+        await this.sendVerificationEmail(user);
         return {
             message: 'A verification email has been sent to your email address'
         }
@@ -50,23 +55,63 @@ export class AuthService {
         const hashedToken = this.verificationTokenGenerator.hashToken(token);
         const tokenData = await this.emailVerificationRepository.findToken(hashedToken);
         if (!tokenData) throw CustomError.BadRequest('Invalid or expired verification token.');
-        //Updatear user email validated true
-        //Eliminar token
-        //Transaction?
-        return tokenData
+
+        await this.userRepository.validateEmailTransaction(tokenData.userId);
+        return {
+            message: 'Email successfully validated'
+        }
     }
 
     refreshToken = () => {
     }
 
-    sendVerificationEmail = async (userId: string) => {
-        await this.emailVerificationRepository.deleteTokenByUserId(userId);
+    sendVerificationEmail = async (user: UserRecord) => {
+        await this.emailVerificationRepository.deleteTokenByUserId(user.id);
         const plainToken = this.verificationTokenGenerator.generateToken();
         const hashedToken = this.verificationTokenGenerator.hashToken(plainToken);
 
-        await this.emailVerificationRepository.createToken(userId, hashedToken);
-        //Enviar mail
-        //Responder al front
+        await this.emailVerificationRepository.createToken(user.id, hashedToken);
+
+        const serviceUrl = `${envs.EMAIL_VERIFICATION_SERVICE_URL}/${plainToken}`
+        await this.emailSender.sendEmail({
+            from: envs.EMAIL_ADDRESS,
+            to: user.email,
+            subject: 'Validate your email',
+            html: this.getEmailHtml(serviceUrl)
+        });
     }
 
+    private getEmailHtml = (serviceUrl: string) => {
+        return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Email Verification</title>
+        </head>
+        <body style="font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; color: #18181b;">
+            <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">Verify Your Email</h1>
+                </div>
+                <div style="padding: 40px;">
+                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">Hello,</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">Thank you for registering! To complete your signup and secure your account, please verify your email address by clicking the verification button below.</p>
+                    
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <!-- Update the href with your actual frontend URL if needed -->
+                        <a href="${serviceUrl}" style="display: inline-block; background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 600; font-size: 16px;">Verify Email Now</a>
+                    </div>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">If you didn't create an account, you can safely ignore this email.</p>
+                </div>
+                <div style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="font-size: 14px; color: #64748b; margin: 0;">&copy; ${new Date().getFullYear()} TrueAuth. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+    }
 }

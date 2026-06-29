@@ -29,7 +29,7 @@ export class EmailVerificationPrismaImpl implements EmailVerificationRepository 
     }
 
     deleteTokenByUserId = async (userId: string) => {
-        await prisma.emailVerification.delete({
+        await prisma.emailVerification.deleteMany({
             where: {
                 userId
             }

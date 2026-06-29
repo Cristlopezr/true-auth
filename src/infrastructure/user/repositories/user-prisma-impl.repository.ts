@@ -5,6 +5,24 @@ import { UserRepository } from "../../../domain/user/respositories/user.reposito
 
 export class UserRepositoryPrismaImpl implements UserRepository {
 
+    validateEmailTransaction = async (userId: string): Promise<void> => {
+        await prisma.$transaction([
+            prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    isEmailValidated: true
+                }
+            }),
+            prisma.emailVerification.deleteMany({
+                where: {
+                    userId: userId
+                }
+            })
+        ])
+    }
+
     getUserById = async (id: string): Promise<UserRecord | null> => {
         return await prisma.user.findFirst({
             where: {
