@@ -16,10 +16,8 @@ export class EmailVerificationPrismaImpl implements EmailVerificationRepository 
         return await prisma.emailVerification.findFirst({
             where: {
                 token,
-                AND: {
-                    expiresAt: {
-                        gt: new Date()
-                    }
+                expiresAt: {
+                    gt: new Date()
                 }
             }
         })

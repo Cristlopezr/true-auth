@@ -18,11 +18,11 @@ export class SessionCookieManager {
         }
     }
 
-    static set(res: Response, refreshToken: string) {
+    static set(res: Response, refreshToken: string, expires: Date) {
         res.cookie(SessionCookieManager.COOKIE_NAME, refreshToken,
             {
                 ...SessionCookieManager.cookieOptions,
-                expires: DateAdapter.addDays(envs.REFRESH_TOKEN_EXPIRATION_DAYS)
+                expires,
             }
         )
     }
@@ -31,7 +31,11 @@ export class SessionCookieManager {
         res.clearCookie(SessionCookieManager.COOKIE_NAME, SessionCookieManager.cookieOptions)
     }
 
-    static get(req: Request): string {
+    static get(req: Request): string | null {
+        return req.cookies?.[SessionCookieManager.COOKIE_NAME];
+    }
+
+    static getCookieOrThrow(req: Request): string {
         const cookie = req.cookies?.[SessionCookieManager.COOKIE_NAME];
         if (!cookie) throw CustomError.Unauthorized('Refresh token missing in cookies');
         return cookie;

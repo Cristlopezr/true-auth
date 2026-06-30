@@ -37,8 +37,7 @@ export class AuthService {
 
         if (!passwordMatch) throw CustomError.Unauthorized('Invalid credentials');
 
-        const refreshToken = this.tokenGenerator.generateToken();
-        const hashedRefreshToken = this.tokenGenerator.hashToken(refreshToken);
+        const { plainToken: refreshToken, hashedToken: hashedRefreshToken } = this.generatePlainAndHashedTokens();
 
         const expirationDate = DateAdapter.addDays(envs.REFRESH_TOKEN_EXPIRATION_DAYS);
         await this.sessionRepository.createSession(hashedRefreshToken, expirationDate, user.id);
@@ -75,12 +74,18 @@ export class AuthService {
 
     refreshJwtToken = async (refreshToken: string) => {
         const hashedRefreshToken = this.tokenGenerator.hashToken(refreshToken)
-        const session = await this.sessionRepository.getSession(hashedRefreshToken);
-        if (!session) throw CustomError.Unauthorized('Invalid session');
-        const { user } = session;
+        //Revoke Session to rotate refreshToken
+        const revokedSession = await this.sessionRepository.revokeSession(hashedRefreshToken, new Date());
+        if (!revokedSession) throw CustomError.Unauthorized('Invalid session');
+        const { user, expiresAt } = revokedSession;
+
+        // Absolute expiration: reuse original expiresAt so the session lifespan is fixed from login.
+        // For sliding expiration: replace with DateAdapter.addDays(envs.REFRESH_TOKEN_EXPIRATION_DAYS)
+        const { plainToken: newRefreshToken, hashedToken: newHashedRefreshToken } = this.generatePlainAndHashedTokens();
+        await this.sessionRepository.createSession(newHashedRefreshToken, expiresAt, user.id);
         const accessToken = this.jwt.signJWT({ sub: user.id });
         return {
-            user: UserEntity.fromRecord(user), accessToken
+            user: UserEntity.fromRecord(user), accessToken, refreshToken: newRefreshToken, expiresAt
         }
     }
 
@@ -95,8 +100,8 @@ export class AuthService {
 
     sendVerificationEmail = async (user: UserRecord) => {
         await this.emailVerificationRepository.deleteTokenByUserId(user.id);
-        const plainToken = this.tokenGenerator.generateToken();
-        const hashedToken = this.tokenGenerator.hashToken(plainToken);
+
+        const { plainToken, hashedToken } = this.generatePlainAndHashedTokens();
 
         const expirationDate = DateAdapter.addMinutes(envs.EMAIL_TOKEN_EXPIRATION_MINUTES);
         await this.emailVerificationRepository.createToken(user.id, hashedToken, expirationDate);
@@ -108,6 +113,15 @@ export class AuthService {
             subject: 'Validate your email',
             html: this.getEmailHtml(serviceUrl)
         });
+    }
+
+    private generatePlainAndHashedTokens = (): { plainToken: string, hashedToken: string } => {
+        const token = this.tokenGenerator.generateToken();
+        const hashedToken = this.tokenGenerator.hashToken(token);
+        return {
+            plainToken: token,
+            hashedToken
+        }
     }
 
     private getEmailHtml = (serviceUrl: string) => {

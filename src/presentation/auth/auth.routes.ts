@@ -41,7 +41,7 @@ export class AuthRoutes {
         router.post('/login', [DtoValidator.Validate(LoginUserDtoImpl, "body")], authController.login)
         router.post('/register', [DtoValidator.Validate(CreateUserDtoImpl, "body")], authController.register)
         router.post('/refresh', authController.refreshJwtToken)
-        router.post('/logout', authController.logout)
+        router.post('/logout', [authMiddleware.validateJWT], authController.logout)
         router.post('/deleteAllSessions', [authMiddleware.validateJWT], authController.deleteAllSessions)
         router.get('/validateEmail/:token', authController.validateEmail)
 

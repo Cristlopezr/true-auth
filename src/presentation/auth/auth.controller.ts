@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { UserDto } from "../../domain/user/dto/user.dto";
 import { SessionCookieManager } from "./utils/session-cookie-manager";
+import { DateAdapter } from "../../infrastructure/common/date-adapter";
+import { envs } from "../../config/envs";
 
 export class AuthController {
 
@@ -10,7 +12,7 @@ export class AuthController {
     login = async (req: Request, res: Response) => {
         const { accessToken, refreshToken, user } = await this.authService.login(req.body)
 
-        SessionCookieManager.set(res, refreshToken);
+        SessionCookieManager.set(res, refreshToken, DateAdapter.addDays(envs.REFRESH_TOKEN_EXPIRATION_DAYS));
 
         res.status(200).json({
             user: UserDto.fromEntity(user),
@@ -19,8 +21,7 @@ export class AuthController {
     }
 
     logout = async (req: Request, res: Response) => {
-        //if cookie is not in the request throws an error
-        await this.authService.logout(SessionCookieManager.get(req));
+        await this.authService.logout(SessionCookieManager.getCookieOrThrow(req));
         SessionCookieManager.clear(res);
         res.status(200).json({ ok: true })
     }
@@ -37,10 +38,11 @@ export class AuthController {
     }
 
     refreshJwtToken = async (req: Request, res: Response) => {
-        const data = await this.authService.refreshJwtToken(SessionCookieManager.get(req))
+        const { accessToken, refreshToken, user, expiresAt } = await this.authService.refreshJwtToken(SessionCookieManager.getCookieOrThrow(req));
+        SessionCookieManager.set(res, refreshToken, expiresAt)
         res.status(200).json({
-            accessToken: data.accessToken,
-            user: UserDto.fromEntity(data.user)
+            accessToken: accessToken,
+            user: UserDto.fromEntity(user)
         })
     }
 
