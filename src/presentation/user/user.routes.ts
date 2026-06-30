@@ -16,9 +16,8 @@ export class UserRoutes {
         const jwt = new JsonWebTokenImpl()
         const authMiddleware = new AuthMiddleware(jwt, userService)
 
-        router.get('/profile', [authMiddleware.validateJWT, authMiddleware.requireVerifiedEmail,
-        authMiddleware.requireRoles(['ADMIN'])], userController.getUserById)
-
+        router.get('/profile', [authMiddleware.validateJWT, authMiddleware.requireVerifiedEmail], userController.getUserById)
+        /* router.get('/admintest', [authMiddleware.requireRoles(['ADMIN'])]) */
         return router;
     }
 

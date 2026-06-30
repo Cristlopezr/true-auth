@@ -18,6 +18,19 @@ export class AuthController {
         })
     }
 
+    logout = async (req: Request, res: Response) => {
+        //if cookie is not in the request throws an error
+        await this.authService.logout(SessionCookieManager.get(req));
+        SessionCookieManager.clear(res);
+        res.status(200).json({ ok: true })
+    }
+
+    deleteAllSessions = async (req: Request, res: Response) => {
+        await this.authService.deleteAllSessions(req.user!.id)
+        SessionCookieManager.clear(res);
+        res.status(200).json({ ok: true })
+    }
+
     register = async (req: Request, res: Response) => {
         const data = await this.authService.register(req.body)
         res.status(200).json({ user: UserDto.fromEntity(data.user), message: data.message })

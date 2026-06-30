@@ -14,9 +14,9 @@ export class JsonWebTokenImpl implements JWT {
             return payload as JwtPayload
         } catch (error: any) {
             if (error.name === 'TokenExpiredError') {
-                throw CustomError.Unauthorized('Token expired')
+                throw CustomError.Unauthorized('Access token expired')
             }
-            throw CustomError.Unauthorized('Invalid token')
+            throw CustomError.Unauthorized('Invalid access token')
         }
     }
 }

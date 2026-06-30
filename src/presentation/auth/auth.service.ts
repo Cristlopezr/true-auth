@@ -84,6 +84,15 @@ export class AuthService {
         }
     }
 
+    logout = async (token: string) => {
+        const hashedRefreshToken = this.tokenGenerator.hashToken(token)
+        await this.sessionRepository.revokeSession(hashedRefreshToken, new Date());
+    }
+
+    deleteAllSessions = async (userId: string) => {
+        await this.sessionRepository.revokeAllSessions(userId, new Date());
+    }
+
     sendVerificationEmail = async (user: UserRecord) => {
         await this.emailVerificationRepository.deleteTokenByUserId(user.id);
         const plainToken = this.tokenGenerator.generateToken();

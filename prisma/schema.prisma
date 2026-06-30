@@ -36,6 +36,7 @@ model Session {
   token String @unique
   expiresAt DateTime
   isRevoked Boolean @default(false)
+  revokedAt DateTime?
   userAgent String?
   ipAddress String?
   createdAt DateTime @default(now())

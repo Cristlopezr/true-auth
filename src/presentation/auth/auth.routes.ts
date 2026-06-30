@@ -12,6 +12,8 @@ import { CryptoTokenGeneratorImpl } from "../../infrastructure/auth/adapters/cry
 import { NodemailerEmailSenderImpl } from "../../infrastructure/common/gateways/nodemailer-email-sender-impl.gateway";
 import { envs } from "../../config/envs";
 import { SessionPrismaRepositoryImpl } from "../../infrastructure/auth/repositories/session-prisma-impl.repository";
+import { AuthMiddleware } from "./middlewares/auth.middleware";
+import { UserService } from "../user/user.service";
 
 export class AuthRoutes {
 
@@ -23,6 +25,8 @@ export class AuthRoutes {
         const jwt = new JsonWebTokenImpl();
         const emailVerificationRepository = new EmailVerificationPrismaImpl();
         const tokenGenerator = new CryptoTokenGeneratorImpl();
+        const userService = new UserService(userRepository);
+        const authMiddleware = new AuthMiddleware(jwt, userService);
         const emailSender = new NodemailerEmailSenderImpl(envs.EMAIL_ADDRESS, envs.GMAIL_APP_PASSWORD);
         const sessionRepository = new SessionPrismaRepositoryImpl();
         const authService = new AuthService(userRepository,
@@ -37,6 +41,8 @@ export class AuthRoutes {
         router.post('/login', [DtoValidator.Validate(LoginUserDtoImpl, "body")], authController.login)
         router.post('/register', [DtoValidator.Validate(CreateUserDtoImpl, "body")], authController.register)
         router.post('/refresh', authController.refreshJwtToken)
+        router.post('/logout', authController.logout)
+        router.post('/deleteAllSessions', [authMiddleware.validateJWT], authController.deleteAllSessions)
         router.get('/validateEmail/:token', authController.validateEmail)
 
         return router;
