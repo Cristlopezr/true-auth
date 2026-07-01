@@ -70,6 +70,7 @@ export class AuthService {
     refreshJwtToken = async (refreshToken: string) => {
         const hashedRefreshToken = this.tokenGenerator.hashToken(refreshToken)
         //Revoke Session to rotate refreshToken
+        //Crear otro parametro para revoke? para separar revoke del user con revoke de refreshToken?
         const revokedSession = await this.sessionRepository.revokeSession(hashedRefreshToken, new Date());
         if (!revokedSession) throw CustomError.Unauthorized('Invalid session');
         const { user, expiresAt } = revokedSession;
@@ -102,7 +103,7 @@ export class AuthService {
         await this.emailSender.sendEmail({
             from: envs.EMAIL_ADDRESS,
             to: user.email,
-            subject: 'Change your password',
+            subject: 'Reset password',
             html: this.getForgotPasswordEmailHtml(resetPasswordUrl)
         })
     }

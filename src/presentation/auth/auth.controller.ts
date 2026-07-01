@@ -27,6 +27,7 @@ export class AuthController {
     }
 
     deleteAllSessions = async (req: Request, res: Response) => {
+        SessionCookieManager.getCookieOrThrow(req);
         await this.authService.deleteAllSessions(req.user!.id)
         SessionCookieManager.clear(res);
         res.status(200).json({ ok: true })
@@ -55,7 +56,7 @@ export class AuthController {
 
     forgotPassword = async (req: Request, res: Response) => {
         //Validar body
-        const data = await this.authService.sendForgotPasswordEmail(req.body.email)
+        await this.authService.sendForgotPasswordEmail(req.body.email)
         res.status(200).json({ ok: true, message: "Email sent successfully" })
     }
 

@@ -37,7 +37,7 @@ export class SessionCookieManager {
 
     static getCookieOrThrow(req: Request): string {
         const cookie = req.cookies?.[SessionCookieManager.COOKIE_NAME];
-        if (!cookie) throw CustomError.Unauthorized('Refresh token missing in cookies');
+        if (!cookie) throw CustomError.Unauthorized('Session cookie missing');
         return cookie;
     }
 }
