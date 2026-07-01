@@ -13,8 +13,9 @@ export const envs = {
     EMAIL_TOKEN_EXPIRATION_MINUTES: get("EMAIL_TOKEN_EXPIRATION_MINUTES").default(10).asInt(),
     EMAIL_ADDRESS: get("EMAIL_ADDRESS").required().asString(),
     GMAIL_APP_PASSWORD: get("GMAIL_APP_PASSWORD").required().asString(),
-    EMAIL_VERIFICATION_SERVICE_URL: get("EMAIL_VERIFICATION_SERVICE_URL").required().asString(),
+    FRONTEND_BASE_URL: get("FRONTEND_BASE_URL").required().asString(),
     REFRESH_TOKEN_EXPIRATION_DAYS: get("REFRESH_TOKEN_EXPIRATION_DAYS").required().asInt(),
     COOKIE_DOMAIN: get("COOKIE_DOMAIN").asString(),
-    NODE_ENV: get("NODE_ENV").required().asEnum(['development', 'production', 'test'])
+    NODE_ENV: get("NODE_ENV").required().asEnum(['development', 'production', 'test']),
+    FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES: get("FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES").required().default(10).asInt()
 };

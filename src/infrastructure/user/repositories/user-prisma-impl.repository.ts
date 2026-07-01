@@ -15,9 +15,29 @@ export class UserRepositoryPrismaImpl implements UserRepository {
                     isEmailValidated: true
                 }
             }),
-            prisma.emailVerification.deleteMany({
+            prisma.userToken.deleteMany({
                 where: {
-                    userId: userId
+                    userId: userId,
+                    type: 'EMAIL_VERIFICATION'
+                }
+            })
+        ])
+    }
+
+    resetPasswordTransaction = async (userId: string, hashedPassword: string): Promise<void> => {
+        await prisma.$transaction([
+            prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    password: hashedPassword
+                }
+            }),
+            prisma.userToken.deleteMany({
+                where: {
+                    userId: userId,
+                    type: 'PASSWORD_RESET'
                 }
             })
         ])

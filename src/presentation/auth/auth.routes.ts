@@ -7,7 +7,7 @@ import { BcryptEncrypterImpl } from "../../infrastructure/auth/adapters/bcrypt-e
 import { JsonWebTokenImpl } from "../../infrastructure/auth/adapters/jsonwebtoken-jwt-impl.gateway";
 import { UserRepositoryPrismaImpl } from "../../infrastructure/user/repositories/user-prisma-impl.repository";
 import { LoginUserDtoImpl } from "./dto/login-user-impl.dto";
-import { EmailVerificationPrismaImpl } from "../../infrastructure/auth/repositories/email-verification-prisma-impl.repository";
+import { UserTokenPrismaImpl } from "../../infrastructure/auth/repositories/user-token-prisma-impl.repository";
 import { CryptoTokenGeneratorImpl } from "../../infrastructure/auth/adapters/crypto-token-generator-impl.gateway";
 import { NodemailerEmailSenderImpl } from "../../infrastructure/common/gateways/nodemailer-email-sender-impl.gateway";
 import { envs } from "../../config/envs";
@@ -23,7 +23,7 @@ export class AuthRoutes {
         const userRepository = new UserRepositoryPrismaImpl();
         const encrypter = new BcryptEncrypterImpl();
         const jwt = new JsonWebTokenImpl();
-        const emailVerificationRepository = new EmailVerificationPrismaImpl();
+        const userTokenRepository = new UserTokenPrismaImpl();
         const tokenGenerator = new CryptoTokenGeneratorImpl();
         const userService = new UserService(userRepository);
         const authMiddleware = new AuthMiddleware(jwt, userService);
@@ -32,7 +32,7 @@ export class AuthRoutes {
         const authService = new AuthService(userRepository,
             encrypter,
             jwt,
-            emailVerificationRepository,
+            userTokenRepository,
             tokenGenerator,
             emailSender,
             sessionRepository);
@@ -42,9 +42,13 @@ export class AuthRoutes {
         router.post('/register', [DtoValidator.Validate(CreateUserDtoImpl, "body")], authController.register)
         router.post('/refresh', authController.refreshJwtToken)
         router.post('/logout', [authMiddleware.validateJWT], authController.logout)
-        router.post('/deleteAllSessions', [authMiddleware.validateJWT], authController.deleteAllSessions)
-        router.get('/validateEmail/:token', authController.validateEmail)
-
+        router.post('/delete-all-sessions', [authMiddleware.validateJWT], authController.deleteAllSessions)
+        //Could be get if we are using direct link to backend in the email
+        //Post (frontend link in the email -> frontend makes request to validate-email with token in body)
+        router.post('/validate-email', authController.validateEmail)
+        router.post('/forgot-password', authController.forgotPassword)
+        router.post('/validate-reset-password-token', authController.validateResetPasswordToken)
+        router.post('/reset-password', authController.resetPassword)
         return router;
     }
 }

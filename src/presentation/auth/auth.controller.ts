@@ -34,7 +34,7 @@ export class AuthController {
 
     register = async (req: Request, res: Response) => {
         const data = await this.authService.register(req.body)
-        res.status(200).json({ user: UserDto.fromEntity(data.user), message: data.message })
+        res.status(201).json({ user: UserDto.fromEntity(data.user), message: data.message })
     }
 
     refreshJwtToken = async (req: Request, res: Response) => {
@@ -47,7 +47,25 @@ export class AuthController {
     }
 
     validateEmail = async (req: Request, res: Response) => {
-        const data = await this.authService.validateEmail(req.params.token as string)
-        res.status(200).json({ ok: true, ...data })
+        //We could use try catch and redirect to success or fail status to the frontend
+        /* res.redirect(`${envs.FRONTEND_URL}/email-verified?status=success`); */
+        await this.authService.validateEmail(req.body.token as string);
+        res.status(200).json({ ok: true, message: "Email validated successfully" })
+    }
+
+    forgotPassword = async (req: Request, res: Response) => {
+        //Validar body
+        const data = await this.authService.sendForgotPasswordEmail(req.body.email)
+        res.status(200).json({ ok: true, message: "Email sent successfully" })
+    }
+
+    validateResetPasswordToken = async (req: Request, res: Response) => {
+        await this.authService.validateResetPasswordToken(req.body.token)
+        res.status(200).json({ ok: true, message: "Valid token" })
+    }
+
+    resetPassword = async (req: Request, res: Response) => {
+        await this.authService.resetPassword(req.body.token, req.body.password)
+        res.status(200).json({ ok: true, message: "Password reset successfully" })
     }
 }

@@ -6,20 +6,21 @@ import { CustomError } from "../../domain/common/custom-error";
 import { UserRepository } from "../../domain/user/respositories/user.repository";
 import { LoginUserDto } from "../../domain/auth/dto/login-user.dto";
 import { UserEntity } from "../../domain/user/entities/user.entity";
-import { EmailVerificationRepository } from "../../domain/auth/repositories/email-verification.repository";
+import { UserTokenRepository } from "../../domain/auth/repositories/user-token-repository";
 import { TokenGenerator } from "../../domain/auth/gateways/token-generator.gateway";
 import { UserRecord } from "../../domain/user/models/user.record";
 import { EmailSender } from "../../domain/common/gateways/email-sender";
 import { envs } from "../../config/envs";
 import { SessionRepository } from "../../domain/auth/repositories/session.repository";
 import { DateAdapter } from "../../infrastructure/common/date-adapter";
+import { TokenType, UserTokenRecord } from "../../domain/auth/models/user-token.record";
 
 export class AuthService {
 
     constructor(private readonly userRepository: UserRepository,
         private readonly passwordEncrypter: PasswordEncrypter,
         private readonly jwt: JWT,
-        private readonly emailVerificationRepository: EmailVerificationRepository,
+        private readonly userTokenRepository: UserTokenRepository,
         private readonly tokenGenerator: TokenGenerator,
         private readonly emailSender: EmailSender,
         private readonly sessionRepository: SessionRepository
@@ -62,14 +63,8 @@ export class AuthService {
     }
 
     validateEmail = async (token: string) => {
-        const hashedToken = this.tokenGenerator.hashToken(token);
-        const tokenData = await this.emailVerificationRepository.findToken(hashedToken);
-        if (!tokenData) throw CustomError.BadRequest('Invalid or expired verification token.');
-
+        const tokenData = await this.findUserTokenOrThrow(token, 'EMAIL_VERIFICATION');
         await this.userRepository.validateEmailTransaction(tokenData.userId);
-        return {
-            message: 'Email successfully validated'
-        }
     }
 
     refreshJwtToken = async (refreshToken: string) => {
@@ -98,20 +93,54 @@ export class AuthService {
         await this.sessionRepository.revokeAllSessions(userId, new Date());
     }
 
-    sendVerificationEmail = async (user: UserRecord) => {
-        await this.emailVerificationRepository.deleteTokenByUserId(user.id);
+    sendForgotPasswordEmail = async (email: string) => {
+        const user = await this.userRepository.findUserByEmail(email, { isActive: true, isEmailValidated: true })
+        if (!user) throw CustomError.BadRequest('Email doest not exists');
+        const plainToken = await this.createUserToken(user.id, 'PASSWORD_RESET', envs.FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES)
+        //Frontend goes to -> POST backend/api/auth/validate-reset-password-token
+        const resetPasswordUrl = `${envs.FRONTEND_BASE_URL}/auth/reset-password/${plainToken}`
+        await this.emailSender.sendEmail({
+            from: envs.EMAIL_ADDRESS,
+            to: user.email,
+            subject: 'Change your password',
+            html: this.getForgotPasswordEmailHtml(resetPasswordUrl)
+        })
+    }
 
+    validateResetPasswordToken = async (token: string) => {
+        await this.findUserTokenOrThrow(token, 'PASSWORD_RESET');
+    }
+
+    resetPassword = async (token: string, password: string) => {
+        const tokenData = await this.findUserTokenOrThrow(token, 'PASSWORD_RESET');
+        const hashedPassword = await this.passwordEncrypter.hashPassword(password, CONSTANTS.SALT_ROUNDS);
+        await this.userRepository.resetPasswordTransaction(tokenData.userId, hashedPassword);
+    }
+
+    private findUserTokenOrThrow = async (token: string, type: TokenType): Promise<UserTokenRecord> => {
+        const hashedToken = this.tokenGenerator.hashToken(token);
+        const tokenData = await this.userTokenRepository.findToken(hashedToken, type);
+        if (!tokenData) throw CustomError.BadRequest('Invalid token');
+        return tokenData;
+    }
+
+    private createUserToken = async (userId: string, type: TokenType, expirationMinutes: number): Promise<string> => {
+        await this.userTokenRepository.deleteTokenByUserId(userId, type);
         const { plainToken, hashedToken } = this.generatePlainAndHashedTokens();
+        const expirationDate = DateAdapter.addMinutes(expirationMinutes);
+        await this.userTokenRepository.createToken(userId, hashedToken, type, expirationDate);
+        return plainToken;
+    }
 
-        const expirationDate = DateAdapter.addMinutes(envs.EMAIL_TOKEN_EXPIRATION_MINUTES);
-        await this.emailVerificationRepository.createToken(user.id, hashedToken, expirationDate);
-
-        const serviceUrl = `${envs.EMAIL_VERIFICATION_SERVICE_URL}/${plainToken}`
+    private sendVerificationEmail = async (user: UserRecord) => {
+        const plainToken = await this.createUserToken(user.id, 'EMAIL_VERIFICATION', envs.EMAIL_TOKEN_EXPIRATION_MINUTES)
+        //Frontend base url, frontend goes to -> POST backend/api/auth/validate-email
+        const verificationEmailUrl = `${envs.FRONTEND_BASE_URL}/auth/validate-email/${plainToken}`
         await this.emailSender.sendEmail({
             from: envs.EMAIL_ADDRESS,
             to: user.email,
             subject: 'Validate your email',
-            html: this.getEmailHtml(serviceUrl)
+            html: this.getEmailVerificationHtml(verificationEmailUrl)
         });
     }
 
@@ -124,7 +153,7 @@ export class AuthService {
         }
     }
 
-    private getEmailHtml = (serviceUrl: string) => {
+    private getEmailVerificationHtml = (serviceUrl: string) => {
         return `
         <!DOCTYPE html>
         <html lang="en">
@@ -150,6 +179,40 @@ export class AuthService {
                     <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 24px; text-align: center;">This verification link will expire in ${envs.EMAIL_TOKEN_EXPIRATION_MINUTES} minutes.</p>
 
                     <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">If you didn't create an account, you can safely ignore this email.</p>
+                </div>
+                <div style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="font-size: 14px; color: #64748b; margin: 0;">&copy; ${new Date().getFullYear()} TrueAuth. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+    private getForgotPasswordEmailHtml = (resetUrl: string) => {
+        return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reset Your Password</title>
+        </head>
+        <body style="font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; color: #18181b;">
+            <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">Reset Your Password</h1>
+                </div>
+                <div style="padding: 40px;">
+                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">Hello,</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">We received a request to reset your password. If you made this request, please click the button below to choose a new password.</p>
+                    
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <a href="${resetUrl}" style="display: inline-block; background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 600; font-size: 16px;">Reset Password</a>
+                    </div>
+                    
+                    <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 24px; text-align: center;">This verification link will expire in ${envs.FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES} minutes.</p>
+
+                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
                 </div>
                 <div style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
                     <p style="font-size: 14px; color: #64748b; margin: 0;">&copy; ${new Date().getFullYear()} TrueAuth. All rights reserved.</p>
