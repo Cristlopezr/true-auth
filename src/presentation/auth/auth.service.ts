@@ -3,7 +3,7 @@ import { CreateUserDto } from "../../domain/user/dto/create-user.dto";
 import { PasswordEncrypter } from "../../domain/auth/gateways/password-encrypter.gateway";
 import { JWT } from "../../domain/auth/gateways/jwt.gateway";
 import { CustomError } from "../../domain/common/custom-error";
-import { UserRepository } from "../../domain/user/respositories/user.repository";
+import { UserRepository } from "../../domain/user/repositories/user.repository";
 import { LoginUserDto } from "../../domain/auth/dto/login-user.dto";
 import { UserEntity } from "../../domain/user/entities/user.entity";
 import { UserTokenRepository } from "../../domain/auth/repositories/user-token-repository";
@@ -74,6 +74,8 @@ export class AuthService {
         const revokedSession = await this.sessionRepository.revokeSession(hashedRefreshToken, new Date());
         if (!revokedSession) throw CustomError.Unauthorized('Invalid session');
         const { user, expiresAt } = revokedSession;
+
+        if (!user.isActive) throw CustomError.Unauthorized('User is inactive');
 
         // Absolute expiration: reuse original expiresAt so the session lifespan is fixed from login.
         // For sliding expiration: replace with DateAdapter.addDays(envs.REFRESH_TOKEN_EXPIRATION_DAYS)

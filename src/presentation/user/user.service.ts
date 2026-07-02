@@ -1,6 +1,6 @@
 import { UserEntity } from "../../domain/user/entities/user.entity";
 import { CustomError } from "../../domain/common/custom-error";
-import { UserRepository } from "../../domain/user/respositories/user.repository";
+import { UserRepository } from "../../domain/user/repositories/user.repository";
 
 export class UserService {
 

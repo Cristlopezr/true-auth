@@ -1,7 +1,7 @@
 import { prisma } from "../../../data/prisma";
 import { CreateUserDto } from "../../../domain/user/dto/create-user.dto";
 import { UserRecord } from "../../../domain/user/models/user.record";
-import { FindUserOptions, UserRepository } from "../../../domain/user/respositories/user.repository";
+import { FindUserOptions, UserRepository } from "../../../domain/user/repositories/user.repository";
 
 export class UserRepositoryPrismaImpl implements UserRepository {
 
