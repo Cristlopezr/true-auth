@@ -6,8 +6,8 @@ export class DtoValidator {
 
     static Validate = (dtoClass: any, propertyName: 'body' | 'query' | 'params') => {
         return async (req: Request, res: Response, next: NextFunction) => {
-            const dtoInstance = plainToInstance(dtoClass, req[propertyName])
-            const errors = await validate(dtoInstance);
+            const dtoInstance = plainToInstance(dtoClass, req[propertyName] ?? {})
+            const errors = await validate(dtoInstance, { whitelist: true, forbidNonWhitelisted: true });
             if (errors.length > 0) {
                 const validationErrors = DtoValidator.FormatErrors(errors)
 
