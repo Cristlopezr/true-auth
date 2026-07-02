@@ -11,5 +11,5 @@ export interface UserRepository {
     findUserByEmail(email: string, options?: FindUserOptions): Promise<UserRecord | null>
     createUser(createUserDto: CreateUserDto): Promise<UserRecord>
     validateEmailTransaction(userId: string): Promise<void>
-    resetPasswordTransaction(userId: string, hashedPassword: string): Promise<void>
+    resetPasswordTransaction(userId: string, hashedPassword: string, sessionRevokedAt: Date): Promise<void>
 }

@@ -115,7 +115,7 @@ export class AuthService {
     resetPassword = async (token: string, password: string) => {
         const tokenData = await this.findUserTokenOrThrow(token, 'PASSWORD_RESET');
         const hashedPassword = await this.passwordEncrypter.hashPassword(password, CONSTANTS.SALT_ROUNDS);
-        await this.userRepository.resetPasswordTransaction(tokenData.userId, hashedPassword);
+        await this.userRepository.resetPasswordTransaction(tokenData.userId, hashedPassword, new Date());
     }
 
     resendVerificationEmail = async (email: string) => {

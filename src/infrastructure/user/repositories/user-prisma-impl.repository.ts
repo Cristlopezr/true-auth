@@ -24,7 +24,7 @@ export class UserRepositoryPrismaImpl implements UserRepository {
         ])
     }
 
-    resetPasswordTransaction = async (userId: string, hashedPassword: string): Promise<void> => {
+    resetPasswordTransaction = async (userId: string, hashedPassword: string, sessionRevokedAt: Date): Promise<void> => {
         await prisma.$transaction([
             prisma.user.update({
                 where: {
@@ -38,6 +38,15 @@ export class UserRepositoryPrismaImpl implements UserRepository {
                 where: {
                     userId: userId,
                     type: 'PASSWORD_RESET'
+                }
+            }),
+            prisma.session.updateMany({
+                where: {
+                    userId: userId,
+                },
+                data: {
+                    isRevoked: true,
+                    revokedAt: sessionRevokedAt
                 }
             })
         ])
