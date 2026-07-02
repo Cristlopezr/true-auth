@@ -50,7 +50,7 @@ export class AuthController {
     validateEmail = async (req: Request, res: Response) => {
         //We could use try catch and redirect to success or fail status to the frontend
         /* res.redirect(`${envs.FRONTEND_URL}/email-verified?status=success`); */
-        await this.authService.validateEmail(req.body.token as string);
+        await this.authService.validateEmail(req.body.token);
         res.status(200).json({ ok: true, message: "Email validated successfully" })
     }
 
