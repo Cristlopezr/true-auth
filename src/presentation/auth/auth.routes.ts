@@ -18,6 +18,7 @@ import { ValidateEmailTokenDto } from "./dto/validate-email-token.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ValidateResetPasswordTokenDto } from "./dto/validate-reset-password-token.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { ResendVerificationEmailDto } from "./dto/resend-verification-email.dto";
 
 export class AuthRoutes {
 
@@ -53,6 +54,7 @@ export class AuthRoutes {
         router.post('/forgot-password', [DtoValidator.Validate(ForgotPasswordDto, "body")], authController.forgotPassword)
         router.post('/validate-reset-password-token', [DtoValidator.Validate(ValidateResetPasswordTokenDto, "body")], authController.validateResetPasswordToken)
         router.post('/reset-password', [DtoValidator.Validate(ResetPasswordDto, "body")], authController.resetPassword)
+        router.post('/resend-verification-email', [DtoValidator.Validate(ResendVerificationEmailDto, "body")], authController.resendVerificationEmail)
         return router;
     }
 }

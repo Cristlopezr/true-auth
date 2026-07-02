@@ -96,7 +96,7 @@ export class AuthService {
 
     sendForgotPasswordEmail = async (email: string) => {
         const user = await this.userRepository.findUserByEmail(email, { isActive: true, isEmailValidated: true })
-        if (!user) throw CustomError.BadRequest('Email doest not exists');
+        if (!user) return;
         const plainToken = await this.createUserToken(user.id, 'PASSWORD_RESET', envs.FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES)
         //Frontend goes to -> POST backend/api/auth/validate-reset-password-token
         const resetPasswordUrl = `${envs.FRONTEND_BASE_URL}/auth/reset-password/${plainToken}`
@@ -116,6 +116,12 @@ export class AuthService {
         const tokenData = await this.findUserTokenOrThrow(token, 'PASSWORD_RESET');
         const hashedPassword = await this.passwordEncrypter.hashPassword(password, CONSTANTS.SALT_ROUNDS);
         await this.userRepository.resetPasswordTransaction(tokenData.userId, hashedPassword);
+    }
+
+    resendVerificationEmail = async (email: string) => {
+        const user = await this.userRepository.findUserByEmail(email, { isActive: true, isEmailValidated: false })
+        if (!user) return;
+        await this.sendVerificationEmail(user)
     }
 
     private findUserTokenOrThrow = async (token: string, type: TokenType): Promise<UserTokenRecord> => {

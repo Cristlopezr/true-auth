@@ -55,9 +55,8 @@ export class AuthController {
     }
 
     forgotPassword = async (req: Request, res: Response) => {
-        //Validar body
         await this.authService.sendForgotPasswordEmail(req.body.email)
-        res.status(200).json({ ok: true, message: "Email sent successfully" })
+        res.status(200).json({ ok: true, message: "If that email address is in our database, we will send you an email to reset your password" })
     }
 
     validateResetPasswordToken = async (req: Request, res: Response) => {
@@ -68,5 +67,10 @@ export class AuthController {
     resetPassword = async (req: Request, res: Response) => {
         await this.authService.resetPassword(req.body.token, req.body.password)
         res.status(200).json({ ok: true, message: "Password reset successfully" })
+    }
+
+    resendVerificationEmail = async (req: Request, res: Response) => {
+        await this.authService.resendVerificationEmail(req.body.email);
+        res.status(200).json({ ok: true, message: "If that email address is registered and not verified, we will send you a confirmation link" })
     }
 }
