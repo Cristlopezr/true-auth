@@ -14,6 +14,7 @@ import { envs } from "../../config/envs";
 import { SessionRepository } from "../../domain/auth/repositories/session.repository";
 import { DateAdapter } from "../../infrastructure/common/date-adapter";
 import { TokenType, UserTokenRecord } from "../../domain/auth/models/user-token.record";
+import { HtmlTemplateAdapter } from "../../infrastructure/common/html-template-";
 
 export class AuthService {
 
@@ -106,7 +107,12 @@ export class AuthService {
             from: envs.EMAIL_ADDRESS,
             to: user.email,
             subject: 'Reset password',
-            html: this.getForgotPasswordEmailHtml(resetPasswordUrl)
+            html: HtmlTemplateAdapter.getHtmlTemplate('forgot-password.template.html',
+                {
+                    resetUrl: resetPasswordUrl,
+                    forgot_password_email_expiration_minutes: `${envs.FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES}`,
+                    copyright_date: new Date().getFullYear().toString()
+                })
         })
     }
 
@@ -149,7 +155,12 @@ export class AuthService {
             from: envs.EMAIL_ADDRESS,
             to: user.email,
             subject: 'Validate your email',
-            html: this.getEmailVerificationHtml(verificationEmailUrl)
+            html: HtmlTemplateAdapter.getHtmlTemplate('verification-email.template.html',
+                {
+                    serviceUrl: verificationEmailUrl,
+                    email_token_expiration_minutes: `${envs.EMAIL_TOKEN_EXPIRATION_MINUTES}`,
+                    copyright_date: new Date().getFullYear().toString()
+                })
         });
     }
 
@@ -160,75 +171,5 @@ export class AuthService {
             plainToken: token,
             hashedToken
         }
-    }
-
-    private getEmailVerificationHtml = (serviceUrl: string) => {
-        return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Email Verification</title>
-        </head>
-        <body style="font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; color: #18181b;">
-            <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 30px 40px; text-align: center;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">Verify Your Email</h1>
-                </div>
-                <div style="padding: 40px;">
-                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">Hello,</p>
-                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">Thank you for registering! To complete your signup and secure your account, please verify your email address by clicking the verification button below.</p>
-                    
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <!-- Update the href with your actual frontend URL if needed -->
-                        <a href="${serviceUrl}" style="display: inline-block; background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 600; font-size: 16px;">Verify Email Now</a>
-                    </div>
-                    
-                    <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 24px; text-align: center;">This verification link will expire in ${envs.EMAIL_TOKEN_EXPIRATION_MINUTES} minutes.</p>
-
-                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">If you didn't create an account, you can safely ignore this email.</p>
-                </div>
-                <div style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
-                    <p style="font-size: 14px; color: #64748b; margin: 0;">&copy; ${new Date().getFullYear()} TrueAuth. All rights reserved.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        `;
-    }
-    private getForgotPasswordEmailHtml = (resetUrl: string) => {
-        return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Reset Your Password</title>
-        </head>
-        <body style="font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; color: #18181b;">
-            <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 30px 40px; text-align: center;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">Reset Your Password</h1>
-                </div>
-                <div style="padding: 40px;">
-                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">Hello,</p>
-                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">We received a request to reset your password. If you made this request, please click the button below to choose a new password.</p>
-                    
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <a href="${resetUrl}" style="display: inline-block; background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 600; font-size: 16px;">Reset Password</a>
-                    </div>
-                    
-                    <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 24px; text-align: center;">This verification link will expire in ${envs.FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES} minutes.</p>
-
-                    <p style="font-size: 16px; line-height: 1.6; color: #3f3f46; margin-bottom: 24px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
-                </div>
-                <div style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
-                    <p style="font-size: 14px; color: #64748b; margin: 0;">&copy; ${new Date().getFullYear()} TrueAuth. All rights reserved.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        `;
     }
 }
