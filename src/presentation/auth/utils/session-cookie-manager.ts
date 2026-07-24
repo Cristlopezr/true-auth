@@ -1,6 +1,5 @@
-import { CookieOptions, NextFunction, Request, Response } from "express";
+import { CookieOptions, Request, Response } from "express";
 import { envs } from "../../../config/envs";
-import { DateAdapter } from "../../../infrastructure/common/date-adapter";
 import { CustomError } from "../../../domain/common/custom-error";
 
 export class SessionCookieManager {

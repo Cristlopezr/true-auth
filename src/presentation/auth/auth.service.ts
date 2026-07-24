@@ -30,7 +30,7 @@ export class AuthService {
     login = async (loginUserDto: LoginUserDto) => {
         const { email, password } = loginUserDto;
 
-        //If use not active can't login - to let them login even so just don't send the options
+        //If user is not active they can't login - to let them login even so just don't send the options
         const user = await this.userRepository.findUserByEmail(email, { isActive: true });
 
         if (!user) throw CustomError.Unauthorized('Invalid credentials');
