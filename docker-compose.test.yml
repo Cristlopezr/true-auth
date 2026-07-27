@@ -1,0 +1,12 @@
+services:
+  db:
+    container_name: true-auth-test
+    image: postgres:15.3
+    ports:
+      - 5433:5432
+    volumes:
+      - ./postgres-test:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

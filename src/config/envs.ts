@@ -4,7 +4,7 @@ import envVar from "env-var";
 const { get } = envVar;
 
 export const envs = {
-    PORT: get("PORT").required().asPortNumber(),
+    PORT: get("PORT").required().default(3000).asPortNumber(),
     POSTGRES_USER: get("POSTGRES_USER").required().asString(),
     POSTGRES_DB: get("POSTGRES_DB").required().asString(),
     POSTGRES_PASSWORD: get("POSTGRES_PASSWORD").required().asString(),
@@ -17,5 +17,5 @@ export const envs = {
     REFRESH_TOKEN_EXPIRATION_DAYS: get("REFRESH_TOKEN_EXPIRATION_DAYS").required().asInt(),
     COOKIE_DOMAIN: get("COOKIE_DOMAIN").asString(),
     NODE_ENV: get("NODE_ENV").required().asEnum(['development', 'production', 'test']),
-    FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES: get("FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES").required().default(10).asInt()
+    FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES: get("FORGOT_PASSWORD_EMAIL_EXPIRATION_MINUTES").default(10).asInt()
 };
