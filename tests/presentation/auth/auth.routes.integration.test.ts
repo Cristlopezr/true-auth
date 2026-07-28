@@ -4,6 +4,8 @@ import { testServer } from "../../test-server";
 import { prisma } from '../../../src/data/prisma';
 import { mockSendEmail } from '../../mocks/email-sender.mock';
 import { envs } from '../../../src/config/envs';
+import { BcryptEncrypterImpl } from '../../../src/infrastructure/auth/adapters/bcrypt-encrypter-impl.gateway';
+import { CONSTANTS } from '../../../src/config/constants';
 
 describe('auth.routes', () => {
 
@@ -22,7 +24,7 @@ describe('auth.routes', () => {
 
     describe('POST /api/auth/register', () => {
 
-        it('should register a new user successfully', async () => {
+        it('Should register a new user successfully', async () => {
 
             const newUserData = {
                 name: "Test User",
@@ -60,7 +62,7 @@ describe('auth.routes', () => {
             });
         })
 
-        it('should return 400 if email is already in use', async () => {
+        it('Should return 400 if email is already in use', async () => {
 
             const newUserData = {
                 name: "Test User",
@@ -89,7 +91,7 @@ describe('auth.routes', () => {
             expect(mockSendEmail).not.toHaveBeenCalled();
         })
 
-        it('should return 400 when required fields are missing', async () => {
+        it('Should return 400 when required fields are missing', async () => {
 
             const newUserData = {
                 name: "Test User",
@@ -113,5 +115,62 @@ describe('auth.routes', () => {
             expect(userCount).toBe(0)
             expect(mockSendEmail).not.toHaveBeenCalled();
         })
+    })
+
+    describe('POST /api/auth/login', () => {
+
+        it('Should login a user successfully', async () => {
+
+            const user = {
+                name: "Test",
+                password: "Password123",
+                email: "test@user.com"
+            }
+
+            const encrypter = new BcryptEncrypterImpl();
+            const hashedPassword = await encrypter.hashPassword(user.password, CONSTANTS.SALT_ROUNDS);
+
+            const createdUser = await prisma.user.create({
+                data: {
+                    name: user.name,
+                    password: hashedPassword,
+                    email: user.email
+                }
+            })
+
+            const res = await request(testServer.app)
+                .post('/api/auth/login')
+                .send({
+                    password: user.password,
+                    email: user.email
+                })
+                .expect(200)
+
+
+            const session = await prisma.session.findFirst({
+                where: {
+                    userId: createdUser.id
+                }
+            })
+            expect(session).not.toBeNull();
+            expect(session?.isRevoked).toBe(false)
+
+            const cookies = res.get('Set-Cookie');
+            expect(cookies).toBeDefined()
+            expect(cookies?.[0]).toContain('sessionId')
+
+            expect(res.body).toEqual({
+                user: {
+                    id: expect.any(String),
+                    name: user.name,
+                    email: user.email,
+                    roles: ['USER'],
+                    isEmailValidated: false,
+                    isActive: true
+                },
+                accessToken: expect.any(String)
+            })
+        })
+
     })
 })
