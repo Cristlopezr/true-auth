@@ -1,3 +1,5 @@
+name: true-auth
+
 services:
   db:
     container_name: true-auth

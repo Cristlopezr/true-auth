@@ -1,3 +1,5 @@
+name: true-auth-test
+
 services:
   db:
     container_name: true-auth-test
