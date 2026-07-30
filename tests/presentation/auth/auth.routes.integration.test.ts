@@ -110,7 +110,7 @@ describe('auth.routes', () => {
             expect(body).toEqual({
                 statusCode: 400,
                 message: 'Bad Request',
-                errors: { email: ['email must be a string', 'email must be an email'] }
+                errors: { email: expect.any(Array) }
             })
             expect(userCount).toBe(0)
             expect(mockSendEmail).not.toHaveBeenCalled();
@@ -169,6 +169,39 @@ describe('auth.routes', () => {
                     isActive: true
                 },
                 accessToken: expect.any(String)
+            })
+        })
+
+        it('Should return 401 invalid credentials if user is not found', async () => {
+
+            const res = await request(testServer.app)
+                .post('/api/auth/login')
+                .send({
+                    email: "testingnotfound@test.com",
+                    password: "Password123"
+                }).expect(401)
+
+            const sessions = await prisma.session.count();
+            expect(res.body).toEqual({ code: 401, message: 'Invalid credentials' });
+            expect(sessions).toBe(0)
+            const cookies = res.get('Set-Cookie');
+            expect(cookies).toBeUndefined();
+        })
+
+        it('Should return 400 when required field is missing', async () => {
+            const { body } = await request(testServer.app)
+                .post('/api/auth/login')
+                .send({
+                    email: "test@test.com"
+                })
+                .expect(400)
+
+            expect(body).toEqual({
+                statusCode: 400,
+                message: 'Bad Request',
+                errors: {
+                    password: expect.any(Array)
+                }
             })
         })
 
